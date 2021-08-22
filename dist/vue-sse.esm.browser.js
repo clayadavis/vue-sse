@@ -1,5 +1,5 @@
 /*!
- * vue-sse v2.2.0
+ * vue-sse v2.3.0
  * (c) 2021 James Churchard
  * @license MIT
  */
@@ -1098,9 +1098,12 @@ class SSEClient {
 
   connect() {
     if (this.forcePolyfill) {
-      this._source = eventsource.EventSourcePolyfill(this.url, Object.assign({}, this.config.polyfillOptions, {
-        withCredentials: this.withCredentials,
-      }));
+      this._source = eventsource.EventSourcePolyfill(
+        this.url,
+        Object.assign({}, this.config.polyfillOptions, {
+          withCredentials: this.withCredentials,
+        }),
+      );
     } else {
       this._source = new window.EventSource(this.url, {
         withCredentials: this.withCredentials,
@@ -1205,8 +1208,13 @@ class SSEClient {
 }
 
 function install(Vue, config) {
-  // eslint-disable-next-line no-param-reassign, no-multi-assign
-  Vue.$sse = Vue.prototype.$sse = new SSEManager(config);
+
+  try {
+    // eslint-disable-next-line no-param-reassign, no-multi-assign
+    Vue.$sse = Vue.prototype.$sse = new SSEManager(config);
+  } catch (e) {
+    Vue.config.globalProperties.$sse = new SSEManager(config);
+  }
 
   if (config && config.polyfill) {
     Promise.resolve().then(function () { return eventsource$1; });
@@ -1229,10 +1237,10 @@ function install(Vue, config) {
     },
     beforeDestroy() {
       if (this.$sse.$clients !== null) {
-        this.$sse.$clients.forEach(c => c.disconnect());
+        this.$sse.$clients.forEach((c) => c.disconnect());
         this.$sse.$clients = [];
       }
-    }
+    },
   });
 }
 
